@@ -36,6 +36,7 @@ clf = GridSearchCV(pipeline, hyperparameters, cv=10)
 clf.fit(X_train, y_train)
 confidence = clf.score(X_test, y_test)
 print("\nThe confidence score:\n")
+    
 print(confidence)
 
 # # 8. Evaluate model pipeline on test data
