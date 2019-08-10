@@ -12,8 +12,8 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...          
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - docker build -t 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest .
+      - docker tag 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
