@@ -2,9 +2,9 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - pip install pytest requests
+      - pip install pytest
       - echo "[+] Running tests..."
-      - pytest
+      - python -m pytest tests/ -v
       - echo Logging in to Amazon ECR...
       - aws --version
       - $(aws ecr get-login --region us-west-1 --no-include-email)
