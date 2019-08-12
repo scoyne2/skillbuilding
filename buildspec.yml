@@ -2,6 +2,9 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - pip install pytest requests
+      - echo "[+] Running tests..."
+      - python -m pytest python -v
       - echo Logging in to Amazon ECR...
       - aws --version
       - $(aws ecr get-login --region us-west-1 --no-include-email)
@@ -24,3 +27,7 @@ phases:
       - printf '[{"name":"airflow-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
     files: imagedefinitions.json
+
+cache:
+  paths:
+    - '/root/.cache/pip'
