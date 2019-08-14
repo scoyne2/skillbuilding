@@ -2,6 +2,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
 
 
 def print_hello():
@@ -25,5 +26,11 @@ hello_operator = PythonOperator(
     task_id="hello_task", python_callable=print_hello, dag=dag
 )
 
+spark_task = BashOperator(
+    task_id="spark_test",
+    bash_command="spark-submit /usr/local/airflow/python/hello_spark.py",
+    dag=dag,
+)
+spark_task >> hello_operator
 dummy_operator >> hello_operator
 dummy_operator2 >> hello_operator
