@@ -6,6 +6,23 @@
 
 FROM python:3.7-slim-stretch
 
+# Install OpenJDK-8
+RUN mkdir /usr/share/man/man1
+RUN apt-get update && \
+    apt-get install -y openjdk-8-jdk && \
+    apt-get install -y ant && \
+    apt-get clean;
+
+# Fix certificate issues
+RUN apt-get update && \
+    apt-get install ca-certificates-java && \
+    apt-get clean && \
+    update-ca-certificates -f;
+
+# Setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
 # Never prompts the user for choices on installation/configuration of packages
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
@@ -46,6 +63,7 @@ RUN set -ex \
         rsync \
         netcat \
         locales \
+        wget \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -69,11 +87,29 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
+
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
+
+# SPARK
+RUN cd /usr/ \
+    && wget "http://mirrors.koehn.com/apache/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz" \
+    && tar xzf spark-2.4.3-bin-hadoop2.7.tgz \
+    && rm spark-2.4.3-bin-hadoop2.7.tgz \
+    && mv spark-2.4.3-bin-hadoop2.7 spark
+
+ENV SPARK_HOME /usr/spark
+ENV PATH="/usr/spark/bin:${PATH}"
+ENV SPARK_MAJOR_VERSION 2
+ENV PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.10.4-src.zip:$SPARK_HOME/python/:$PYTHONPATH
+
+RUN mkdir -p /usr/spark/work/ \
+    && chmod -R 777 /usr/spark/work/
+
+ENV SPARK_MASTER_PORT 707
 
 EXPOSE 8080 5555 8793
 
