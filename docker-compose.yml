@@ -45,7 +45,9 @@ services:
             retries: 3
 
     flower:
-        image: airflow:latest
+        image: ${REPOSITORY_URI}/flower:${IMAGE_TAG}
+        build:
+          context: .
         restart: always
         depends_on:
             - redis
@@ -57,8 +59,10 @@ services:
         command: flower
 
     scheduler:
-        image: airflow:latest
-        restart: always
+        image: ${REPOSITORY_URI}/scheduler:${IMAGE_TAG}
+        build:
+          context: .
+        restart: always        
         depends_on:
             - webserver
         volumes:
@@ -76,7 +80,9 @@ services:
         command: scheduler
 
     worker:
-        image: airflow:latest
+        image: ${REPOSITORY_URI}/worker:${IMAGE_TAG}
+        build:
+          context: .
         restart: always
         depends_on:
             - scheduler
