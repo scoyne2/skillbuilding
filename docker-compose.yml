@@ -2,7 +2,7 @@ version: '2.1'
 services:
     redis:
         image: ${REPOSITORY_URI}/redis:${IMAGE_TAG}
-	build: 
+        build: 
           context: /supporting_docker_containers/redis/.
         # command: redis-server --requirepass redispass
 
