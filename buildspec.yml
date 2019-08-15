@@ -22,7 +22,3 @@ phases:
       - echo Pushing the Docker images...
       - docker-compose push      
       - echo Writing image definitions file...
-artifacts:
-    files: 
-    	- imagedefinitions.json
-        - docker-compose.yml  
