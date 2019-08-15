@@ -16,7 +16,7 @@ services:
         #     - ./pgdata:/var/lib/postgresql/data/pgdata
 
     webserver:
-        image: ${REPOSITORY_URI}/airflow:{$IMAGE_TAG}
+        image: ${REPOSITORY_URI}/airflow:${IMAGE_TAG}
         build:
           context: .
         restart: always
