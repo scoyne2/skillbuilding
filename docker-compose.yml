@@ -8,7 +8,10 @@ services:
         # command: redis-server --requirepass redispass
 
     postgres:
-        image: postgres:9.6
+        image: ${REPOSITORY_URI}/postgres:${IMAGE_TAG}
+        build:
+          context: .
+          dockerfile: Dockerfile-postgres
         environment:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
