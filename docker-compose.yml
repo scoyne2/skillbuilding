@@ -3,7 +3,7 @@ services:
     redis:
         image: ${REPOSITORY_URI}/redis:${IMAGE_TAG}
         build: 
-          context: /supporting_docker_containers/redis/.
+          context: ./supporting_docker_containers/redis/
         # command: redis-server --requirepass redispass
 
     postgres:
