@@ -1,7 +1,9 @@
 version: '2.1'
 services:
     redis:
-        image: 'redis:5.0.5'
+        image: ${REPOSITORY_URI}/airflow:${IMAGE_TAG}
+	build: 
+          context: /supporting_docker_containers/redis/.
         # command: redis-server --requirepass redispass
 
     postgres:
