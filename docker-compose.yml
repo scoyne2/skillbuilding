@@ -1,14 +1,14 @@
 version: '2.1'
 services:
     redis:
-        image: ${REPOSITORY_URI}/redis:${IMAGE_TAG}
+        image: ${REPOSITORY_URI}/redis:latest
         build: 
           context: .
           dockerfile: Dockerfile-redis
         # command: redis-server --requirepass redispass
 
     postgres:
-        image: ${REPOSITORY_URI}/postgres:${IMAGE_TAG}
+        image: ${REPOSITORY_URI}/postgres:latest
         build:
           context: .
           dockerfile: Dockerfile-postgres
@@ -52,7 +52,7 @@ services:
      
     
     flower:
-        image: ${REPOSITORY_URI}/flower:${IMAGE_TAG}
+        image: ${REPOSITORY_URI}/flower:latest
         build:
           context: .
         restart: always
@@ -66,7 +66,7 @@ services:
         command: flower
 
     scheduler:
-        image: ${REPOSITORY_URI}/scheduler:${IMAGE_TAG}
+        image: ${REPOSITORY_URI}/scheduler:latest
         build:
           context: .
         restart: always        
@@ -87,7 +87,7 @@ services:
         command: scheduler
 
     worker:
-        image: ${REPOSITORY_URI}/worker:${IMAGE_TAG}
+        image: ${REPOSITORY_URI}/worker:latest
         build:
           context: .
         restart: always
