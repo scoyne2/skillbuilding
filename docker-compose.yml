@@ -3,8 +3,8 @@ services:
     redis:
         image: ${REPOSITORY_URI}/redis:${IMAGE_TAG}
         build: 
-          context: $PWD/supporting_docker_containers/redis
-          dockerfile: $PWD/supporting_docker_containers/redis/Dockerfile
+          context: .
+          dockerfile: Dockerfile-redis
         # command: redis-server --requirepass redispass
 
     postgres:
