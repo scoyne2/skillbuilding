@@ -28,7 +28,7 @@ hello_operator = PythonOperator(
 
 spark_task = BashOperator(
     task_id="spark_test",
-    bash_command="spark-submit /usr/local/airflow/python/hello_spark.py",
+    bash_command="spark-submit -master yarn /usr/local/airflow/python/hello_spark.py",
     dag=dag,
 )
 spark_task >> hello_operator

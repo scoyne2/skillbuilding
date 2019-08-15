@@ -88,6 +88,11 @@ RUN set -ex \
         /usr/share/doc-base
 
 
+#setup spark yarn settings
+COPY conf ${AIRFLOW_USER_HOME}/conf
+ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
+RUN export HADOOP_CONF_DIR
+
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
@@ -103,6 +108,7 @@ RUN cd /usr/ \
     && mv spark-2.4.3-bin-hadoop2.7 spark
 
 ENV SPARK_HOME /usr/spark
+RUN export SPARK_HOME
 ENV PATH="/usr/spark/bin:${PATH}"
 ENV SPARK_MAJOR_VERSION 2
 ENV PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.10.4-src.zip:$SPARK_HOME/python/:$PYTHONPATH
