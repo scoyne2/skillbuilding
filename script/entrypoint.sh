@@ -9,8 +9,8 @@ TRY_LOOP="20"
 : "${POSTGRES_HOST:="airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
-: "${POSTGRES_PASSWORD:="airflow"}"
-: "${POSTGRES_DB:="airflowpassword"}"
+: "${POSTGRES_PASSWORD:="airflowpassword"}"
+: "${POSTGRES_DB:="airflow"}"
 
 # Defaults and back-compat
 : "${AIRFLOW_HOME:="/usr/local/airflow"}"

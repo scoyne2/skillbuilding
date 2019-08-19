@@ -8,21 +8,21 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
       - $(aws ecr get-login --region us-west-1 --no-include-email)
-      - REPOSITORY_URI=852056369035.dkr.ecr.us-west-1.amazonaws.com
+      - REPOSITORY_URI=852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI/airflow .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI/airflow:$IMAGE_TAG
+      - docker build -t $REPOSITORY_URI .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI/airflow:latest
-      - docker push $REPOSITORY_URI/airflow:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo Writing image definitions file...
       - printf '[{"name":"airflow-container","imageUri":"%s"}]' $REPOSITORY_URI/airflow:$IMAGE_TAG > imagedefinitions.json
       - ecs-cli configure --cluster airflow-project --default-launch-type FARGATE --config-name airflow-project --region us-west-1
