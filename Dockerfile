@@ -33,6 +33,7 @@ ARG AIRFLOW_USER_HOME=/usr/local/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
+ARG APP_HOME=/usr/local/app_home
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -73,8 +74,8 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
-    && pip install 'redis==3.2' \
+    && pip install apache-airflow[crypto,celery,s3,slack,redis,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+    && pip install 'redis==3.3.7' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -93,10 +94,13 @@ COPY conf ${AIRFLOW_USER_HOME}/conf
 ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
 RUN export HADOOP_CONF_DIR
 
+COPY script/create-user.py /create-user.py
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
 COPY python/ ${AIRFLOW_USER_HOME}/python
+COPY ./app ${APP_HOME}/app
+#COPY ./requirements.txt /requirements.txt
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 
@@ -117,6 +121,12 @@ RUN mkdir -p /usr/spark/work/ \
     && chmod -R 777 /usr/spark/work/
 
 ENV SPARK_MASTER_PORT 707
+
+VOLUME ${AIRFLOW_HOME}/dags
+VOLUME ${APP_HOME}/app
+
+RUN chown -R airflow: ${AIRFLOW_HOME}
+ENV CONFIG="PRODUCTION"
 
 EXPOSE 8080 5555 8793
 

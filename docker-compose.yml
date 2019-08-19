@@ -1,107 +1,75 @@
-version: '2.1'
+version: '2'
 services:
-    redis:
-        image: ${REPOSITORY_URI}/redis:latest
-        build: 
-          context: .
-          dockerfile: Dockerfile-redis
-        # command: redis-server --requirepass redispass
-
-    postgres:
-        image: ${REPOSITORY_URI}/postgres:latest
-        build:
-          context: .
-          dockerfile: Dockerfile-postgres
-        environment:
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-        # Uncomment these lines to persist data on the local filesystem.
-        #     - PGDATA=/var/lib/postgresql/data/pgdata
-        # volumes:
-        #     - ./pgdata:/var/lib/postgresql/data/pgdata
-
     webserver:
-        image: ${REPOSITORY_URI}/airflow:latest
-        build:
-          context: .
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
         restart: always
-        depends_on:
-            - postgres
-            - redis
+        cpu_shares: 50
+        mem_limit: 1048576000
         environment:
             - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
         ports:
             - "8080:8080"
         command: webserver
-        healthcheck:
-            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
-            interval: 30s
-            timeout: 30s
-            retries: 3
-     
-    
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-webserver
+
     flower:
-        image: ${REPOSITORY_URI}/flower:latest
-        build:
-          context: .
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
         restart: always
-        depends_on:
-            - redis
+        cpu_shares: 50
+        mem_limit: 1048576000
         environment:
             - EXECUTOR=Celery
-            # - REDIS_PASSWORD=redispass
         ports:
             - "5555:5555"
         command: flower
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-flower
 
     scheduler:
-        image: ${REPOSITORY_URI}/scheduler:latest
-        build:
-          context: .
-        restart: always        
-        depends_on:
-            - webserver
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
-        environment:
-            - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-            - EXECUTOR=Celery
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
-        command: scheduler
-
-    worker:
-        image: ${REPOSITORY_URI}/worker:latest
-        build:
-          context: .
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
         restart: always
         depends_on:
-            - scheduler
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
+            - webserver
+        cpu_shares: 50
+        mem_limit: 1048576000
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - LOAD_EX=n
             - EXECUTOR=Celery
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
+        command: scheduler
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-scheduler
+
+    worker:
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
+        restart: always
+        depends_on:
+            - webserver
+        cpu_shares: 50
+        mem_limit: 1048576000
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Celery
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
         command: worker
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-worker

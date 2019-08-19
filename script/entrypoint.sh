@@ -2,15 +2,15 @@
 
 TRY_LOOP="20"
 
-: "${REDIS_HOST:="redis"}"
+: "${REDIS_HOST:="redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com"}"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
-: "${POSTGRES_HOST:="postgres"}"
+: "${POSTGRES_HOST:="airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
 : "${POSTGRES_PASSWORD:="airflow"}"
-: "${POSTGRES_DB:="airflow"}"
+: "${POSTGRES_DB:="airflowpassword"}"
 
 # Defaults and back-compat
 : "${AIRFLOW_HOME:="/usr/local/airflow"}"
