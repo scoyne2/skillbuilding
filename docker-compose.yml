@@ -9,6 +9,11 @@ services:
             - LOAD_EX=n
             - EXECUTOR=Celery
             - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
+            - POSTGRES_HOST=airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com
+            - POSTGRES_PORT=5432
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflowpassword
+            - POSTGRES_DB=airflow
         ports:
             - "8080:8080"
         command: webserver
