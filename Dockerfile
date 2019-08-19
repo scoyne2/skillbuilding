@@ -33,7 +33,6 @@ ARG AIRFLOW_USER_HOME=/usr/local/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
-ARG APP_HOME=/usr/local/app_home
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -99,8 +98,6 @@ COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
 COPY python/ ${AIRFLOW_USER_HOME}/python
-COPY ./app ${APP_HOME}/app
-#COPY ./requirements.txt /requirements.txt
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 
@@ -123,7 +120,6 @@ RUN mkdir -p /usr/spark/work/ \
 ENV SPARK_MASTER_PORT 707
 
 VOLUME ${AIRFLOW_HOME}/dags
-VOLUME ${APP_HOME}/app
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 ENV CONFIG="PRODUCTION"
