@@ -2,7 +2,6 @@ version: '2'
 services:
     webserver:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        restart: always
         cpu_shares: 50
         mem_limit: 1048576000
         environment:
@@ -14,6 +13,9 @@ services:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflowpassword
             - POSTGRES_DB=airflow
+            - REDIS_HOST=redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD:=""
         ports:
             - "8080:8080"
         command: webserver
@@ -26,7 +28,6 @@ services:
 
     flower:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        restart: always
         cpu_shares: 50
         mem_limit: 1048576000
         environment:
@@ -43,9 +44,6 @@ services:
 
     scheduler:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        restart: always
-        depends_on:
-            - webserver
         cpu_shares: 50
         mem_limit: 1048576000
         environment:
@@ -62,9 +60,6 @@ services:
 
     worker:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        restart: always
-        depends_on:
-            - webserver
         cpu_shares: 50
         mem_limit: 1048576000
         environment:
