@@ -23,7 +23,7 @@
 
   <property>
     <name>yarn.scheduler.capacity.maximum-am-resource-percent</name>
-    <value>0.1</value>
+    <value>0.5</value>
     <description>
       Maximum percent of resources in the cluster which can be used to run 
       application masters i.e. controls number of concurrent running
@@ -141,6 +141,26 @@
       "clumping" of applications on particular nodes. The default is 1.
       Legal values are 1-MAX_INT. This config is refreshable.
     </description>
+  </property>
+
+  <property>
+    <name>yarn.scheduler.capacity.root.accessible-node-labels</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>yarn.scheduler.capacity.root.accessible-node-labels.CORE.capacity</name>
+    <value>100</value>
+  </property>
+
+  <property>
+    <name>yarn.scheduler.capacity.root.default.accessible-node-labels</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>yarn.scheduler.capacity.root.default.accessible-node-labels.CORE.capacity</name>
+    <value>100</value>
   </property>
 
 </configuration>

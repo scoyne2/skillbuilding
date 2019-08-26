@@ -29,7 +29,7 @@ hello_operator = PythonOperator(
 
 spark_task = BashOperator(
     task_id="spark_test",
-    bash_command="spark-submit {0} /usr/local/airflow/python/hello_spark.py".format(
+    bash_command="spark-submit --deploy-mode cluster --master yarn /usr/local/airflow/python/hello_spark.py".format(
         sparkSettings
     ),
     retries=3,

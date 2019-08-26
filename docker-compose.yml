@@ -75,6 +75,7 @@ services:
             - REDIS_HOST=redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com
             - REDIS_PORT=6379
             - REDIS_PASSWORD:=""
+            - SPARK_SETTINGS:="--master yarn"
         command: worker
         logging:
           driver: awslogs

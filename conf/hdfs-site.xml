@@ -22,24 +22,24 @@
 
   <property>
     <name>dfs.namenode.rpc-address</name>
-    <value>ip-10-0-1-204.us-west-1.compute.internal:8020</value>
+    <value>ip-172-30-0-110.us-west-1.compute.internal:8020</value>
   </property>
 
   <property>
     <name>dfs.namenode.http-address</name>
-    <value>ip-10-0-1-204.us-west-1.compute.internal:50070</value>
+    <value>ip-172-30-0-110.us-west-1.compute.internal:50070</value>
   </property>
 
   <property>
     <name>dfs.namenode.https-address</name>
-    <value>ip-10-0-1-204.us-west-1.compute.internal:50470</value>
+    <value>ip-172-30-0-110.us-west-1.compute.internal:50470</value>
   </property>
 
 
 
   <property>
     <name>dfs.datanode.data.dir</name>
-    <value>file:///mnt/hdfs,file:///mnt1/hdfs</value>
+    <value>file:///mnt/hdfs</value>
   </property>
 
 
@@ -50,7 +50,7 @@
  
   <property>
     <name>dfs.namenode.name.dir</name>
-    <value>file:///mnt/namenode,file:///mnt1/namenode</value>
+    <value>file:///mnt/namenode</value>
   </property>
 
   <property>
@@ -114,7 +114,7 @@
 
   <property>
     <name>dfs.encryption.key.provider.uri</name>
-    <value>kms://http@ip-10-0-1-204.us-west-1.compute.internal:9700/kms</value>
+    <value>kms://http@ip-172-30-0-110.us-west-1.compute.internal:9700/kms</value>
   </property>
 
   <property>
@@ -149,12 +149,12 @@
 
   <property>
     <name>dfs.name.dir</name>
-    <value>/mnt/namenode,/mnt1/namenode</value>
+    <value>/mnt/namenode</value>
   </property>
 
   <property>
     <name>dfs.data.dir</name>
-    <value>/mnt/hdfs,/mnt1/hdfs</value>
+    <value>/mnt/hdfs</value>
   </property>
 
 
