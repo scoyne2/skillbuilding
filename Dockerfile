@@ -5,7 +5,9 @@
 # SOURCE: https://github.com/puckel/docker-airflow
 
 FROM python:3.7-slim-stretch
+LABEL maintainer="scoyne2@kent.edu"
 
+##*******************
 # Install OpenJDK-8
 RUN mkdir /usr/share/man/man1
 RUN apt-get update && \
@@ -22,6 +24,7 @@ RUN apt-get update && \
 # Setup JAVA_HOME -- useful for docker commandline
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN export JAVA_HOME
+##*******************
 
 # Never prompts the user for choices on installation/configuration of packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -73,8 +76,8 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,s3,slack,redis,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
-    && pip install 'redis==3.3.7' \
+    && pip install apache-airflow[log,crypto,celery,postgres,hive,jdbc,mysql,redis,s3,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+    && pip install 'redis==3.3.8' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -86,21 +89,7 @@ RUN set -ex \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
-
-
-#setup spark yarn settings
-COPY conf ${AIRFLOW_USER_HOME}/conf
-ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
-RUN export HADOOP_CONF_DIR
-
-COPY script/create-user.py /create-user.py
-COPY script/entrypoint.sh /entrypoint.sh
-COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
-COPY dags/ ${AIRFLOW_USER_HOME}/dags
-COPY python/ ${AIRFLOW_USER_HOME}/python
-
-RUN chown -R airflow: ${AIRFLOW_USER_HOME}
-
+##*******************
 # SPARK
 RUN cd /usr/ \
     && wget "http://mirrors.koehn.com/apache/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz" \
@@ -118,11 +107,35 @@ RUN mkdir -p /usr/spark/work/ \
     && chmod -R 777 /usr/spark/work/
 
 ENV SPARK_MASTER_PORT 707
+##*******************
 
-VOLUME ${AIRFLOW_HOME}/dags
 
-RUN chown -R airflow: ${AIRFLOW_HOME}
-ENV CONFIG="PRODUCTION"
+##*******************
+#setup spark yarn settings
+COPY conf ${AIRFLOW_USER_HOME}/conf
+ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
+RUN export HADOOP_CONF_DIR
+##*******************
+
+##*******************
+ENV SPARK_SETTINGS ""
+##*******************
+
+ENV AWS_ACCESS_KEY_ID AKIA4MYUEM6FTNXDDEDK
+ENV AWS_SECRET_ACCESS_KEY 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
+ENV AWS_DEFAULT_REGION us-west-1
+
+RUN export AWS_ACCESS_KEY_ID
+RUN export AWS_SECRET_ACCESS_KEY
+RUN export AWS_DEFAULT_REGION
+##*******************
+COPY dags/ ${AIRFLOW_USER_HOME}/dags
+COPY python/ ${AIRFLOW_USER_HOME}/python
+##*******************
+COPY script/entrypoint.sh /entrypoint.sh
+COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
+
+RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 
 EXPOSE 8080 5555 8793
 

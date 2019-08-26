@@ -1,0 +1,2 @@
+Load Balancer Address:
+http://airflow-lb-929058581.us-west-1.elb.amazonaws.com:8080/admin/

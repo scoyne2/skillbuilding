@@ -2,14 +2,14 @@
 
 TRY_LOOP="20"
 
-: "${REDIS_HOST:="redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com"}"
+: "${REDIS_HOST:="redis"}"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
-: "${POSTGRES_HOST:="airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com"}"
+: "${POSTGRES_HOST:="postgres"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
-: "${POSTGRES_PASSWORD:="airflowpassword"}"
+: "${POSTGRES_PASSWORD:="airflow"}"
 : "${POSTGRES_DB:="airflow"}"
 
 # Defaults and back-compat
@@ -72,8 +72,8 @@ fi
 case "$1" in
   webserver)
     airflow initdb
-    if [ "$AIRFLOW__CORE__EXECUTOR" = "LocalExecutor" ]; then
-      # With the "Local" executor it should all run in one container.
+    if [ "$AIRFLOW__CORE__EXECUTOR" = "LocalExecutor" ] || [ "$AIRFLOW__CORE__EXECUTOR" = "SequentialExecutor" ]; then
+      # With the "Local" and "Sequential" executors it should all run in one container.
       airflow scheduler &
     fi
     exec airflow webserver

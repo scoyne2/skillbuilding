@@ -3,6 +3,9 @@ from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
+import os
+
+sparkSettings = os.environ["SPARK_SETTINGS"]
 
 
 def print_hello():
@@ -19,18 +22,19 @@ dag = DAG(
 
 
 dummy_operator = DummyOperator(task_id="dummy_task", retries=3, dag=dag)
-dummy_operator2 = DummyOperator(task_id="dummy_task2", retries=3, dag=dag)
-
 
 hello_operator = PythonOperator(
-    task_id="hello_task", python_callable=print_hello, dag=dag
+    task_id="hello_task", python_callable=print_hello, retries=3, dag=dag
 )
 
 spark_task = BashOperator(
     task_id="spark_test",
-    bash_command="spark-submit --master yarn /usr/local/airflow/python/hello_spark.py",
+    bash_command="spark-submit {0} /usr/local/airflow/python/hello_spark.py".format(
+        sparkSettings
+    ),
+    retries=3,
     dag=dag,
 )
+
 spark_task >> hello_operator
 dummy_operator >> hello_operator
-dummy_operator2 >> hello_operator

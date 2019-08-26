@@ -1,9 +1,95 @@
 version: '2'
 services:
+    # redis:
+    #     image: 'redis:5.0.5'
+    #     # command: redis-server --requirepass redispass
+
     webserver:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
         cpu_shares: 50
-        mem_limit: 1048576000
+        mem_limit: 2048576000
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Celery
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
+            - POSTGRES_HOST=airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com
+            - POSTGRES_PORT=5432
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflowpassword
+            - POSTGRES_DB=airflow
+            - REDIS_HOST=redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD:=""
+            - SPARK_SETTINGS:="--master yarn"
+        ports:
+            - "8080:8080"
+        command: webserver
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-webserver
+    
+    scheduler:
+        depends_on:
+            - "webserver"
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
+        cpu_shares: 50
+        mem_limit: 2048576000
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Celery
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
+            - POSTGRES_HOST=airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com
+            - POSTGRES_PORT=5432
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflowpassword
+            - POSTGRES_DB=airflow
+            - REDIS_HOST=redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD:=""
+        command: scheduler
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-scheduler
+
+    worker:
+        depends_on:
+            - "scheduler"
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
+        cpu_shares: 50
+        mem_limit: 2048576000
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Celery
+            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
+            - POSTGRES_HOST=airflow-postgres.creqph1hpjk3.us-west-1.rds.amazonaws.com
+            - POSTGRES_PORT=5432
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflowpassword
+            - POSTGRES_DB=airflow
+            - REDIS_HOST=redis-2.emfzah.ng.0001.usw1.cache.amazonaws.com
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD:=""
+        command: worker
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: airflow
+            awslogs-region: us-west-1
+            awslogs-stream-prefix: airflow-worker
+
+    flower:
+        depends_on:
+            - "worker"
+            - "scheduler"
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
+        cpu_shares: 50
+        mem_limit: 2048576000
         environment:
             - LOAD_EX=n
             - EXECUTOR=Celery
@@ -17,22 +103,6 @@ services:
             - REDIS_PORT=6379
             - REDIS_PASSWORD:=""
         ports:
-            - "8080:8080"
-        command: webserver
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-webserver
-
-    flower:
-        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        cpu_shares: 50
-        mem_limit: 1048576000
-        environment:
-            - EXECUTOR=Celery
-        ports:
             - "5555:5555"
         command: flower
         logging:
@@ -41,35 +111,3 @@ services:
             awslogs-group: airflow
             awslogs-region: us-west-1
             awslogs-stream-prefix: airflow-flower
-
-    scheduler:
-        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        cpu_shares: 50
-        mem_limit: 1048576000
-        environment:
-            - LOAD_EX=n
-            - EXECUTOR=Celery
-            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
-        command: scheduler
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-scheduler
-
-    worker:
-        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
-        cpu_shares: 50
-        mem_limit: 1048576000
-        environment:
-            - LOAD_EX=n
-            - EXECUTOR=Celery
-            - FERNET_KEY=tHzPMKdMQOT7OzsKyzfmDX0Xse2Zzk23QzRCohZOpHo=
-        command: worker
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-worker
