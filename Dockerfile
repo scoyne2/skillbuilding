@@ -107,6 +107,9 @@ RUN mkdir -p /usr/spark/work/ \
     && chmod -R 777 /usr/spark/work/
 
 ENV SPARK_MASTER_PORT 707
+
+RUN pip install pyspark
+
 ##*******************
 
 
