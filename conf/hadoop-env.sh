@@ -105,6 +105,6 @@ export HADOOP_CLASSPATH="$HADOOP_CLASSPATH:/usr/share/aws/emr/cloudwatch-sink/li
 export HADOOP_CLASSPATH="$HADOOP_CLASSPATH:/usr/share/aws/emr/security/conf:/usr/share/aws/emr/security/lib/*"
 
 export HADOOP_OPTS="$HADOOP_OPTS -server -XX:OnOutOfMemoryError='kill -9 %p'"
-export HADOOP_NAMENODE_HEAPSIZE=384
-export HADOOP_DATANODE_HEAPSIZE=192
-export HADOOP_JOB_HISTORYSERVER_HEAPSIZE=256
+export HADOOP_NAMENODE_HEAPSIZE=192
+export HADOOP_DATANODE_HEAPSIZE=96
+export HADOOP_JOB_HISTORYSERVER_HEAPSIZE=128

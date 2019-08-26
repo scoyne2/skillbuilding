@@ -108,6 +108,7 @@ RUN mkdir -p /usr/spark/work/ \
 
 ENV SPARK_MASTER_PORT 707
 
+
 RUN pip install pyspark
 
 ##*******************
@@ -117,7 +118,8 @@ RUN pip install pyspark
 #setup spark yarn settings
 COPY conf ${AIRFLOW_USER_HOME}/conf
 ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
-RUN export HADOOP_CONF_DIR
+ENV YARN_CONF_DIR ${AIRFLOW_USER_HOME}/conf
+
 ##*******************
 
 ##*******************
@@ -128,9 +130,6 @@ ENV AWS_ACCESS_KEY_ID AKIA4MYUEM6FTNXDDEDK
 ENV AWS_SECRET_ACCESS_KEY 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
 ENV AWS_DEFAULT_REGION us-west-1
 
-RUN export AWS_ACCESS_KEY_ID
-RUN export AWS_SECRET_ACCESS_KEY
-RUN export AWS_DEFAULT_REGION
 ##*******************
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
 COPY python/ ${AIRFLOW_USER_HOME}/python

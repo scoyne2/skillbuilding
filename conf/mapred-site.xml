@@ -23,11 +23,11 @@
 
   <property>
     <name>mapreduce.jobhistory.address</name>
-    <value>ip-172-30-0-110.us-west-1.compute.internal:10020</value>
+    <value>ip-172-30-0-18.us-west-1.compute.internal:10020</value>
   </property>
   <property>
     <name>mapreduce.jobhistory.webapp.address</name>
-    <value>ip-172-30-0-110.us-west-1.compute.internal:19888</value>
+    <value>ip-172-30-0-18.us-west-1.compute.internal:19888</value>
   </property>
 
 
@@ -38,7 +38,7 @@
 
   <property>
     <name>mapreduce.cluster.local.dir</name>
-    <value>/mnt/mapred</value>
+    <value>/mnt/mapred,/mnt1/mapred</value>
   </property>
 
 
@@ -47,12 +47,12 @@
 
   <property>
     <name>mapreduce.map.java.opts</name>
-    <value>-Xmx512m</value>
+    <value>-Xmx288m</value>
   </property>
 
   <property>
     <name>mapreduce.reduce.java.opts</name>
-    <value>-Xmx768m</value>
+    <value>-Xmx288m</value>
   </property>
 
   <property>
@@ -62,7 +62,7 @@
 
   <property>
     <name>mapreduce.task.io.sort.mb</name>
-    <value>200</value>
+    <value>100</value>
   </property>
 
   <property>
@@ -170,7 +170,7 @@
 
   <property>
     <name>mapreduce.map.memory.mb</name>
-    <value>768</value>
+    <value>512</value>
   </property>
 
   <property>
@@ -185,7 +185,7 @@
 
   <property>
     <name>mapreduce.reduce.memory.mb</name>
-    <value>1024</value>
+    <value>512</value>
   </property>
 
   <property>
@@ -195,12 +195,12 @@
 
   <property>
     <name>yarn.app.mapreduce.am.resource.mb</name>
-    <value>1024</value>
+    <value>512</value>
   </property>
 
   <property>
     <name>mapred.local.dir</name>
-    <value>/mnt/mapred</value>
+    <value>/mnt/mapred,/mnt1/mapred</value>
   </property>
 
 </configuration>

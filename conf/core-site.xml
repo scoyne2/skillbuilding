@@ -21,7 +21,7 @@
   <property>
     <!-- URI of NN. Fully qualified. No IP.-->
     <name>fs.defaultFS</name>
-    <value>hdfs://ip-172-30-0-110.us-west-1.compute.internal:8020</value>
+    <value>hdfs://ip-172-30-0-18.us-west-1.compute.internal:8020</value>
   </property>
 
 
@@ -108,7 +108,7 @@
 
   <property>
     <name>fs.s3.buffer.dir</name>
-    <value>/mnt/s3</value>
+    <value>/mnt/s3,/mnt1/s3</value>
     <final>true</final>
   </property>
 
@@ -179,7 +179,7 @@
 
   <property>
     <name>hadoop.security.key.provider.path</name>
-    <value>kms://http@ip-172-30-0-110.us-west-1.compute.internal:9700/kms</value>
+    <value>kms://http@ip-172-30-0-18.us-west-1.compute.internal:9700/kms</value>
   </property>
 
   <property>
