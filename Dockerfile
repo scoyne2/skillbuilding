@@ -108,22 +108,21 @@ RUN mkdir -p /usr/spark/work/ \
 
 ENV SPARK_MASTER_PORT 707
 
-
 RUN pip install pyspark
-
 ##*******************
-
 
 ##*******************
 #setup spark yarn settings
 COPY conf ${AIRFLOW_USER_HOME}/conf
 ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
 ENV YARN_CONF_DIR ${AIRFLOW_USER_HOME}/conf
-
-##*******************
-
-##*******************
 ENV SPARK_SETTINGS ""
+#copy spark jar folder from local
+COPY jars ${SPARK_HOME}/jars
+
+RUN mkdir -p /mnt/s3,/mnt1/s3/ \
+    && chmod -R 777 /mnt/s3,/mnt1/s3/
+ENV HADOOP_USER_NAME hadoop
 ##*******************
 
 ENV AWS_ACCESS_KEY_ID AKIA4MYUEM6FTNXDDEDK

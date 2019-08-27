@@ -9,10 +9,12 @@ aws ecr get-login --no-include-email --region us-west-1 --profile personal
 
 
 #port forwarding
-aws emr socks --cluster-id j-VT21DVGKT8ZT --key-pair-file ~/airflow-cluster.pem --profile personal --region us-west-1
+aws emr socks --cluster-id j-HBM70XIKEIPP --key-pair-file ~/airflow-cluster.pem --profile personal --region us-west-1
 
 # copy files
-scp -r -i ~/airflow-cluster.pem hadoop@ec2-18-144-2-130.us-west-1.compute.amazonaws.com:/etc/hadoop/conf  ~/Documents/GitHub/skillbuilding/conf
+scp -r -i ~/airflow-cluster.pem hadoop@ec2-52-53-165-66.us-west-1.compute.amazonaws.com:/etc/hadoop/conf  ~/Documents/GitHub/skillbuilding/conf
+
+scp -r -i ~/airflow-cluster.pem hadoop@ec2-52-53-165-66.us-west-1.compute.amazonaws.com:/usr/share/aws/emr  ~/Documents/GitHub/skillbuilding/jars
 
 
 #submit test
