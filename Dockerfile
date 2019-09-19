@@ -79,6 +79,8 @@ RUN set -ex \
     && pip install apache-airflow[log,crypto,celery,postgres,hive,jdbc,mysql,redis,s3,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.3.8' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
+    && pip install dbt \
+    && pip install dbt-spark \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -89,13 +91,14 @@ RUN set -ex \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
 ##*******************
 # SPARK
 RUN cd /usr/ \
-    && wget "http://mirrors.koehn.com/apache/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz" \
-    && tar xzf spark-2.4.3-bin-hadoop2.7.tgz \
-    && rm spark-2.4.3-bin-hadoop2.7.tgz \
-    && mv spark-2.4.3-bin-hadoop2.7 spark
+    && wget "http://mirror.cogentco.com/pub/apache/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz" \
+    && tar xzf spark-2.4.4-bin-hadoop2.7.tgz \
+    && rm spark-2.4.4-bin-hadoop2.7.tgz \
+    && mv spark-2.4.4-bin-hadoop2.7 spark
 
 ENV SPARK_HOME /usr/spark
 RUN export SPARK_HOME
@@ -109,6 +112,9 @@ RUN mkdir -p /usr/spark/work/ \
 ENV SPARK_MASTER_PORT 707
 
 RUN pip install pyspark
+
+RUN apt-get update && apt-get install apt-file -y && apt-file update && apt-get install vim -y
+
 ##*******************
 
 ##*******************
@@ -129,9 +135,16 @@ ENV AWS_ACCESS_KEY_ID AKIA4MYUEM6FTNXDDEDK
 ENV AWS_SECRET_ACCESS_KEY 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
 ENV AWS_DEFAULT_REGION us-west-1
 
+
 ##*******************
 COPY dags/ ${AIRFLOW_USER_HOME}/dags
 COPY python/ ${AIRFLOW_USER_HOME}/python
+RUN apt-get install git-all -y
+RUN cd ${AIRFLOW_USER_HOME}
+RUN git clone https://github.com/scoyne2/dbt-demo.git
+RUN mkdir /root/.dbt
+COPY profiles.yml /root/.dbt/
+
 ##*******************
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
