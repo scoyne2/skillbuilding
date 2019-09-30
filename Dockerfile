@@ -131,9 +131,6 @@ RUN mkdir -p /mnt/s3,/mnt1/s3/ \
 ENV HADOOP_USER_NAME hadoop
 ##*******************
 
-ENV AWS_ACCESS_KEY_ID AKIA4MYUEM6FTNXDDEDK
-ENV AWS_SECRET_ACCESS_KEY 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
-ENV AWS_DEFAULT_REGION us-west-1
 
 
 ##*******************
