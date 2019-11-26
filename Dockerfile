@@ -1,13 +1,12 @@
 # VERSION 1.10.4
 # AUTHOR: Matthieu "Puckel_" Roisil
 # DESCRIPTION: Basic Airflow container
-# BUILD: docker build --rm -t puckel/docker-airflow .
-# SOURCE: https://github.com/puckel/docker-airflow
+# BUILD: docker build --rm -t airflow .
 
 FROM python:3.7-slim-stretch
 LABEL maintainer="scoyne2@kent.edu"
 
-##*******************
+##******************* START JAVA
 # Install OpenJDK-8
 RUN mkdir /usr/share/man/man1
 RUN apt-get update && \
@@ -24,7 +23,7 @@ RUN apt-get update && \
 # Setup JAVA_HOME -- useful for docker commandline
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN export JAVA_HOME
-##*******************
+##******************* END JAVA
 
 # Never prompts the user for choices on installation/configuration of packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -79,8 +78,6 @@ RUN set -ex \
     && pip install apache-airflow[log,crypto,celery,postgres,hive,jdbc,mysql,redis,s3,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.3.8' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
-    && pip install dbt \
-    && pip install dbt-spark \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -92,8 +89,7 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-##*******************
-# SPARK
+##******************* START SPARK
 RUN cd /usr/ \
     && wget "http://mirror.cogentco.com/pub/apache/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz" \
     && tar xzf spark-2.4.4-bin-hadoop2.7.tgz \
@@ -110,39 +106,41 @@ RUN mkdir -p /usr/spark/work/ \
     && chmod -R 777 /usr/spark/work/
 
 ENV SPARK_MASTER_PORT 707
-
+ENV HADOOP_HOME /usr/spark
 RUN pip install pyspark
+
+RUN mkdir -p /usr/local/airflow/spark-warehouse/ \
+    && chmod -R 777 /usr/local/airflow/spark-warehouse/
+
+##******************* END SPARK
+
+##******************* START EMR/YARN
+#setup spark yarn settings
+#COPY conf ${AIRFLOW_USER_HOME}/conf
+#ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
+#ENV YARN_CONF_DIR ${AIRFLOW_USER_HOME}/conf
+#ENV SPARK_SETTINGS ""
+
+#copy spark jar folder from local
+#COPY jars ${SPARK_HOME}/jars
+
+#RUN mkdir -p /mnt/s3,/mnt1/s3/ \
+#    && chmod -R 777 /mnt/s3,/mnt1/s3/
+##******************* END EMR/YARN
+
+RUN pip install psycopg2
+
+##******************* START AIRFLOW SETTINGS
+COPY dags/ ${AIRFLOW_USER_HOME}/dags
+COPY python/ ${AIRFLOW_USER_HOME}/python
+RUN cd ${AIRFLOW_USER_HOME}
+COPY script/entrypoint.sh /entrypoint.sh
+COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
+RUN chown -R airflow: ${AIRFLOW_USER_HOME}
+##******************* END AIRFLOW SETTINGS
 
 RUN apt-get update && apt-get install apt-file -y && apt-file update && apt-get install vim -y
 
-##*******************
-
-##*******************
-#setup spark yarn settings
-COPY conf ${AIRFLOW_USER_HOME}/conf
-ENV HADOOP_CONF_DIR ${AIRFLOW_USER_HOME}/conf
-ENV YARN_CONF_DIR ${AIRFLOW_USER_HOME}/conf
-ENV SPARK_SETTINGS ""
-#copy spark jar folder from local
-COPY jars ${SPARK_HOME}/jars
-
-RUN mkdir -p /mnt/s3,/mnt1/s3/ \
-    && chmod -R 777 /mnt/s3,/mnt1/s3/
-ENV HADOOP_USER_NAME hadoop
-##*******************
-
-
-
-##*******************
-COPY dags/ ${AIRFLOW_USER_HOME}/dags
-COPY python/ ${AIRFLOW_USER_HOME}/python
-RUN apt-get install git-all -y
-RUN cd ${AIRFLOW_USER_HOME}
-RUN git clone https://github.com/scoyne2/dbt-demo.git
-RUN mkdir /root/.dbt
-COPY profiles.yml /root/.dbt/
-
-##*******************
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 
@@ -150,7 +148,8 @@ RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 
 EXPOSE 8080 5555 8793
 
-USER airflow
+USER airflow 
+
 WORKDIR ${AIRFLOW_USER_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["webserver"] # set default arg for entrypoint
