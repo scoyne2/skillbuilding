@@ -1,118 +1,218 @@
 import buildingconnected as bc
 import logging
+from datetime import datetime
 
-
-# CREATE EXTERNAL SCHEMA IF NOT EXISTS buildingconnected_external
-# FROM HIVE METASTORE 
-# DATABASE 'dev'
-# URI 'ec2-52-53-151-146.us-west-1.compute.amazonaws.com'
-# IAM_ROLE 'arn:aws:iam::852056369035:role/bigdatacertadmin'
-
-
-# CREATE EXTERNAL TABLE dev.buildingconnected.dim_dates (DateNum int, Date date, YearMonthNum integer, Calendar_Quarter string, MonthNum integer, MonthName string, MonthShortName string, WeekNum integer, DayNumOfYear integer, DayNumOfMonth integer, DayNumOfWeek integer, DayName string, DayShortName string, Quarter integer, YearQuarterNum integer, DayNumOfQuarter integer) 
-# stored as textfile 
-# location 's3://interviewtestbld/scoyne/data/dim_data/dim_dates';
-
-#create schema if not exists buildingconnected_local;
-
-
-
-
+TODAY = datetime.today().strftime('%Y-%m-%d')
 
 
 def main():
-    sql_query = "create schema if not exists buildingconnected_local"    
-    bc.execute_redshift_query(sql_query)
-
-    sql_query = "CREATE TABLE dev.buildingconnected_local.snapshot_bidder_groups (event_timestamp VARCHAR, event_type VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, dateFirstViewed date, dateFirstInvited date, dateCreated date, companyId VARCHAR, biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR)"   
-    #bc.execute_redshift_query(sql_query)
-
-    main2()
-
-
-def main2():
     """Return None
 
     Creates the necessary database and tables for the ETL pipeline
     """
+
     logging.basicConfig(filename='BuildingConnectedCreateTables.log', level=logging.INFO)
     logging.warn('********************************* start creating database and tables  *********************************')
-    logging.warn('********************************* start spark  *********************************')
-
-    spark, sc, sqlContext = bc.init_spark("createtables")
-    logging.warn('********************************* create db  *********************************')
-
-    #create DATABASE        
-    sqlContext.sql(" CREATE DATABASE IF NOT EXISTS {0} ".format(bc.DATABASE))
     
-    logging.warn('********************************* create raw table  *********************************')
+    #create local and external schemas
+    sql_query = "create schema if not exists buildingconnected"    
+    bc.execute_redshift_query(sql_query)
+    sql_query =  """create external schema if not exists buildingconnected_external from data catalog 
+                    database 'buildingconnected_db' 
+                    iam_role 'arn:aws:iam::852056369035:role/RedshiftCopyUnload'
+                    create external database if not exists;"""
+    bc.execute_redshift_query(sql_query)
 
-    #create raw table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (ingest_timestamp string, ingest_uuid string, collection string, message STRUCT <bidPackageId: string, biddergroupid: string, bidsSealed: string, \
-        companyId: string, creatorId: string, dateBidsDue: date, dateCreated: date, dateEnd: date, dateFirstInvited: date, dateFirstViewed: date, datePublished: date, dateRFIsDue: date, dateStart: date, \
-        keywords: string, ndaRequired: string, officeId: string, projectId: string, public: string, state: string>, event_timestamp string, event_type string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.RAW_TABLE))
+
+    #create events_raw external table for read only query on redshift
+    #external table is needed to support struct
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.RAW_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   ( ingest_timestamp VARCHAR, 
+                     ingest_uuid VARCHAR, 
+                     collection VARCHAR, 
+                     message struct < bidPackageId: VARCHAR, biddergroupid: VARCHAR, bidsSealed: VARCHAR,
+                                      companyId: VARCHAR, creatorId: VARCHAR, dateBidsDue: date, 
+                                      dateCreated: date, dateEnd: date, dateFirstInvited: date,
+                                      dateFirstViewed: date, datePublished: date, dateRFIsDue: date, 
+                                      dateStart: date, keywords: VARCHAR, ndaRequired: VARCHAR, 
+                                      officeId: VARCHAR, projectId: VARCHAR, public: VARCHAR, state: VARCHAR >,
+                     event_timestamp VARCHAR, 
+                     event_type VARCHAR 
+                    )
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""".format(bc.RAW_TABLE, bc.PARTITION_COLUMN)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.RAW_TABLE)
+    bc.execute_redshift_query(sql_query)
+
+
+    #create events_clean external table for read only query on redshift
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.CLEAN_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
+                     event_type VARCHAR, bidPackageId VARCHAR, biddergroupid VARCHAR, bidsSealed VARCHAR, companyId VARCHAR,
+                     creatorId VARCHAR, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date,
+                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords array<VARCHAR>, 
+                     ndaRequired VARCHAR, officeId VARCHAR, projectId VARCHAR, public VARCHAR, state VARCHAR
+                    )
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""" .format(bc.CLEAN_TABLE, bc.PARTITION_COLUMN)
+
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.CLEAN_TABLE)
+    bc.execute_redshift_query(sql_query)
+
+
+    #create events_dirty external table for read only query on redshift
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.DIRTY_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
+                     event_type VARCHAR, bidPackageId VARCHAR, biddergroupid VARCHAR, bidsSealed VARCHAR, companyId VARCHAR,
+                     creatorId VARCHAR, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date,
+                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords array<VARCHAR>, 
+                     ndaRequired VARCHAR, officeId VARCHAR, projectId VARCHAR, public VARCHAR, state VARCHAR
+                    )
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""" .format(bc.DIRTY_TABLE, bc.PARTITION_COLUMN)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.DIRTY_TABLE)
+    bc.execute_redshift_query(sql_query)   
+
+
+    #create project events external table for read only query on redshift
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.PROJECTS_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   (
+                    event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, projectId VARCHAR, public VARCHAR, officeID VARCHAR, 
+                    ndaRequired VARCHAR, dateStart date, dateRFIsDue date, dateEnd date, dateCreated date, dateBidsDue date,
+                    creatorId VARCHAR, companyId VARCHAR, bidsSealed VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR
+                    ) 
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""" .format(bc.PROJECTS_EVENTS_TABLE, bc.PARTITION_COLUMN)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.PROJECTS_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)   
+
+
+    #create bid packages events external table for read only query on redshift
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.BID_PACKAGES_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, keywords array<VARCHAR>, dateStart date, datePublished date, 
+                    dateEnd date, dateCreated date, dateBidsDue date, creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, 
+                    ingest_timestamp VARCHAR)
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""" .format(bc.BID_PACKAGES_EVENTS_TABLE, bc.PARTITION_COLUMN)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.BID_PACKAGES_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)   
+
+
+    #create bidder groups events external table for read only query on redshift
+    #add today's partition
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.BIDDER_GROUPS_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, dateFirstViewed date,
+                    dateFirstInvited date, dateCreated date,  companyId VARCHAR, biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR)
+                partitioned by ({1} date)
+                STORED AS PARQUET
+                LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
+                table properties ('compression'='snappy');""" .format(bc.BIDDER_GROUPS_EVENTS_TABLE, bc.PARTITION_COLUMN)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.BIDDER_GROUPS_EVENTS_TABLE)
+    bc.execute_redshift_query(sql_query)   
+
+
+
+    #create snapshot tables local on redshift.
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bidder_groups_temp
+                   ( event_timestamp VARCHAR, event_type VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, 
+                     dateFirstViewed DATE, dateFirstInvited DATE, dateCreated DATE, companyId VARCHAR, 
+                     biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE
+                    ) """ 
+
+    bc.execute_redshift_query(sql_query)
+
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_projects_temp
+                   (event_timestamp VARCHAR, event_type VARCHAR, projectId VARCHAR, public VARCHAR, 
+                   officeID VARCHAR, ndaRequired VARCHAR, dateStart date, dateRFIsDue date,
+                   dateEnd date, dateCreated date, dateBidsDue date, creatorId VARCHAR, 
+                   companyId VARCHAR, bidsSealed VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE) """ 
+    bc.execute_redshift_query(sql_query)
+
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bid_packages_temp
+                   ( event_timestamp VARCHAR, event_type VARCHAR, keywords VARCHAR(1000), 
+                     dateStart date, datePublished date, dateEnd date, dateCreated date, dateBidsDue date,
+                     creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date VARCHAR) """ 
+    bc.execute_redshift_query(sql_query)
+
+
+
+    #create snapshot tables local on redshift.
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bidder_groups 
+                   ( event_timestamp VARCHAR, event_type VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, 
+                     dateFirstViewed VARCHAR, dateFirstInvited VARCHAR, dateCreated VARCHAR, companyId VARCHAR, 
+                     biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE
+                    ) """ 
+
+    bc.execute_redshift_query(sql_query)
+
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_projects 
+                   (event_timestamp VARCHAR, event_type VARCHAR, projectId VARCHAR, public VARCHAR, 
+                   officeID VARCHAR, ndaRequired VARCHAR, dateStart VARCHAR, dateRFIsDue VARCHAR,
+                   dateEnd VARCHAR, dateCreated VARCHAR, dateBidsDue VARCHAR, creatorId VARCHAR, 
+                   companyId VARCHAR, bidsSealed VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE) """ 
+    bc.execute_redshift_query(sql_query)
+
+    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bid_packages 
+                   ( event_timestamp VARCHAR, event_type VARCHAR, keywords VARCHAR(1000), 
+                     dateStart VARCHAR, datePublished VARCHAR, dateEnd VARCHAR, dateCreated VARCHAR, dateBidsDue VARCHAR,
+                     creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date VARCHAR) """ 
+    bc.execute_redshift_query(sql_query)
+
+
+    #create date dimension external table for read only query on redshift
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.DIM_DATES_TABLE)
+    bc.execute_redshift_query(sql_query)
+    sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
+                   ( DateNum integer, Date date, YearMonthNum integer, Calendar_Quarter VARCHAR, MonthNum integer, MonthName VARCHAR, MonthShortName VARCHAR, WeekNum integer,
+                     DayNumOfYear integer, DayNumOfMonth integer, DayNumOfWeek integer, DayName VARCHAR, DayShortName VARCHAR, Quarter integer, YearQuarterNum integer, DayNumOfQuarter integer
+                    )             
+                row format delimited
+                fields terminated by ','  
+                STORED AS TEXTFILE
+                LOCATION 's3://interviewtestbld/scoyne/data/dim_data/{0}/'  ;""" .format(bc.DIM_DATES_TABLE)
+    bc.execute_redshift_query(sql_query)
    
-    #create dirty table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (ingest_timestamp string, ingest_uuid string, collection string, event_timestamp string, event_type string, bidPackageId string, biddergroupid string,\
-        bidsSealed string, companyId string, creatorId string, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date, dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, \
-        keywords string, ndaRequired string, officeId string, projectId string, public string, state string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.DIRTY_TABLE))
-    
-    #create clean table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (ingest_timestamp string, ingest_uuid string, collection string, event_timestamp string, event_type string, bidPackageId string, biddergroupid string, \
-        bidsSealed string, companyId string, creatorId string, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date, dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, \
-        keywords array<string>, ndaRequired string, officeId string, projectId string, public string, state string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.CLEAN_TABLE))
-    
-    #create projects transactions table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, state string, projectId string, public string, officeID string, ndaRequired string, dateStart date, dateRFIsDue date,\
-        dateEnd date, dateCreated date, dateBidsDue date, creatorId string, companyId string, bidsSealed string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.PROJECTS_EVENTS_TABLE))
-
-    #create bid packages transactions table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, state string, keywords array<string>, dateStart date, datePublished date, dateEnd date, dateCreated date, dateBidsDue date, \
-        creatorId string, bidPackageId string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.BID_PACKAGES_EVENTS_TABLE))
-
-    #create bidder groups transactions table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, state string, officeID string, ndaRequired string, dateFirstViewed date, dateFirstInvited date, \
-        dateCreated date,  companyId string, biddergroupid string, bidPackageId string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.BIDDER_GROUPS_EVENTS_TABLE))
-
-    #create projects snapshot table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, projectId string, public string, officeID string, ndaRequired string, dateStart date, dateRFIsDue date,\
-        dateEnd date, dateCreated date, dateBidsDue date, creatorId string, companyId string, bidsSealed string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.PROJECT_SNAPSHOT_TABLE))
-
-    #create bid packages snapshot table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, keywords array<string>, dateStart date, datePublished date, dateEnd date, dateCreated date, dateBidsDue date, \
-        creatorId string, bidPackageId string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.BID_PACKAGES_SNAPSHOT_TABLE))
-
-    #create bidder groups snapshot table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (event_timestamp string, event_type string, officeID string, ndaRequired string, dateFirstViewed date, dateFirstInvited date, \
-        dateCreated date,  companyId string, biddergroupid string, bidPackageId string, ingest_uuid string, ingest_timestamp string) \
-        PARTITIONED BY (ingest_date string) \
-        LOCATION '{0}{1}'".format(bc.FOLDER_PATH, bc.BIDDER_GROUPS_SNAPSHOT_TABLE))
-
-    #create date dimension table
-    sqlContext.sql(" CREATE EXTERNAL TABLE IF NOT EXISTS {1} (DateNum integer, Date date, YearMonthNum integer, Calendar_Quarter string, MonthNum integer, MonthName string, MonthShortName string, WeekNum integer, \
-        DayNumOfYear integer, DayNumOfMonth integer, DayNumOfWeek integer, DayName string, DayShortName string, Quarter integer, YearQuarterNum integer, DayNumOfQuarter integer) \
-        LOCATION '{0}dim_data/dim_dates/'".format(bc.FOLDER_PATH, bc.DIM_DATES_TABLE))
-
-    print("******* trying to show tables")
-    sqlContext.sql("show tables in buildingconnected").show()
-
     logging.warn('********************************* end creating database and tables  *********************************')
+
 
 if __name__ == "__main__":
     main()

@@ -12,15 +12,10 @@ def main():
     
     logging.basicConfig(filename='BuildingConnectedSplitCleanDirty.log', level=logging.INFO)
     logging.warn('********************************* start splitting clean and dirty *********************************')
-
-
+    
     spark, sc, sqlContext = bc.init_spark("splitcleandirty") 
-
-    inputDF=sqlContext.table("buildingconnected.events_raw")
-    #inputDF = spark.read.format("parquet").load("s3a://interviewtestbld/scoyne/data/events_raw/")
-
-    flatDf = inputDF.drop("ingest_date").select("*", "message.*").drop("message").withColumn("ingest_date", current_date())
-
+    inputDf = bc.read_from_s3(spark, bc.RAW_TABLE).drop(col(bc.PARTITION_COLUMN))
+    flatDf = inputDf.select("*", "message.*").drop("message").withColumn(bc.PARTITION_COLUMN, current_date())
     is_clean = (col("state").isNotNull() & col("collection").isin(VALID_COLLECTIONS))
 
     #dirty records are where state is null, or collection is invalid type By reviewing the data these cases appear
@@ -36,7 +31,6 @@ def main():
     bc.write_table(dfClean, bc.CLEAN_TABLE)
 
     logging.warn('********************************* done splitting clean and dirty *********************************')
-
 
 if __name__ == "__main__":
     main()

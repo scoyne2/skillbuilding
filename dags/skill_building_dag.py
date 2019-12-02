@@ -54,7 +54,7 @@ transform_bid_packages = BashOperator(
 
 transform_bidder_groups = BashOperator(
     task_id="transform_bidder_groups",
-    bash_command=" spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0  --conf 'spark.sql.warehouse.dir=/usr/local/airflow/spark-warehouse/ --conf 'spark.driver.extraJavaOptions=-Dderby.system.home=/usr/local/airflow/derby' /usr/local/airflow/python/transformevents.py -c bidder-groups",
+    bash_command=" spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0  --conf 'spark.sql.warehouse.dir=/usr/local/airflow/spark-warehouse/' --conf 'spark.driver.extraJavaOptions=-Dderby.system.home=/usr/local/airflow/derby' /usr/local/airflow/python/transformevents.py -c bidder-groups",
     retries=3,
     dag=dag,
 )
@@ -75,7 +75,7 @@ snapshot_bid_packages = BashOperator(
 
 snapshot_bidder_groups = BashOperator(
     task_id="snapshot_bidder_groups",
-    bash_command=" spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0  --conf 'spark.sql.warehouse.dir=/usr/local/airflow/spark-warehouse/' --conf 'spark.driver.extraJavaOptions=-Dderby.system.home=/usr/local/airflow/derby' /usr/local/airflow/python/createsnapshot.py -c bidder-groups",
+    bash_command=" spark-submit --packages org.apache.spark:spark-avro_2.11:2.4.2,io.github.spark-redshift-community:spark-redshift_2.11:4.0.0,org.apache.hadoop:hadoop-aws:2.7.0 --jars https://s3.amazonaws.com/redshift-downloads/drivers/jdbc/1.2.36.1060/RedshiftJDBC42-no-awssdk-1.2.36.1060.jar --conf 'spark.sql.warehouse.dir=/usr/local/airflow/spark-warehouse/' --conf 'spark.driver.extraJavaOptions=-Dderby.system.home=/usr/local/airflow/derby' /usr/local/airflow/python/createsnapshot.py -c bidder-groups",
     retries=3,
     dag=dag,
 )

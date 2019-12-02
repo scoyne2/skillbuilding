@@ -122,10 +122,11 @@ RUN mkdir -p /usr/local/airflow/spark-warehouse/ \
 #ENV SPARK_SETTINGS ""
 
 #copy spark jar folder from local
-#COPY jars ${SPARK_HOME}/jars
+COPY jars/ ${SPARK_HOME}/jars/
 
 #RUN mkdir -p /mnt/s3,/mnt1/s3/ \
 #    && chmod -R 777 /mnt/s3,/mnt1/s3/
+#ENV HADOOP_USER_NAME hadoop
 ##******************* END EMR/YARN
 
 RUN pip install psycopg2
