@@ -83,17 +83,20 @@ def read_from_s3(spark, table, partition = "*", folderPath = FOLDER_PATH, databa
 
 def write_redshift_table(df, tableName):
    #write temp table as csv split into 20 parts but no compression and no partition
-    df.coalesce(20) \
-        .write.format("csv") \
+    df.coalesce(1) \
+        .write.format("CSV") \
         .option("header","false") \
         .mode("Overwrite") \
-        .save(TEMPS3DIR)
+        .save(TEMPS3DIR+"/"+tableName)
+
+    sql_query = """delete dev.buildingconnected.{0}""".format(tableName)
+    execute_redshift_query(sql_query)
 
     #copy from temp table to redshift table of same name 
     sql_query = """copy dev.buildingconnected.{0}  
-                   from 's3://interviewtestbld/temp'
+                   from 's3://interviewtestbld/temp/{0}'
                    iam_role 'arn:aws:iam::852056369035:role/RedshiftCopyUnload'
-                   format as csv
+                   format as CSV
                 """.format(tableName)
     execute_redshift_query(sql_query)
 

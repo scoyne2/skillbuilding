@@ -23,24 +23,22 @@ def main(inputTable, outputTable, partitionColumns):
     logging.warn('********************************* start snapshot creation *********************************')  
 
     spark, sc, sqlContext = bc.init_spark("creatsnapshot"+ DATABASE + "." + inputTable)
+    inputDF = bc.read_from_s3(spark, inputTable, TODAYS_PARTITION).drop(col("state")).withColumn("ingest_date", current_date())
     
-    inputDF = bc.read_from_s3(spark, inputTable, TODAYS_PARTITION).drop(col("state"))
-    
-    #copy to a temp table
-    bc.write_redshift_table(inputDF, outputTable + "_temp")
+    try:
+        #get the last snapshot from the outputTable
+        outputDf = bc.read_from_s3(spark, outputTable, TODAYS_PARTITION)        
+        #combine the existing snapshot and the new data, rank by the unique identifier (partition columns) and order by timestamp, in this manner the most recent version of a item will be rank 1
+        unionDf = inputDF.union(outputDf).withColumn("rank", dense_rank().over(Window.partitionBy(*partitionColumns).orderBy(desc("event_timestamp"))))
+        #keep only rank 1 records
+        finalDf = unionDf.where(col("rank")==lit("1")).drop(col("rank"))        
+    except:#TODO better error handling, this catches ALL errors, not just the one we expect.
+        print("It is possible this is the first run and there is no data in the outputtable")
+        tempDf = inputDF.withColumn("rank", dense_rank().over(Window.partitionBy(*partitionColumns).orderBy(desc("event_timestamp"))))
+        finalDf = tempDf.where(col("rank")==lit("1")).drop(col("rank"))
 
-
-    #update in redshift
-
-    # #get the last snapshot from the outputTable
-    # outputDf = bc.read_from_s3(spark, outputTable, TODAYS_PARTITION)
-    
-    # #combine the existing snapshot and the new data, rank by the unique identifier (partition columns) and order by timestamp, in this manner the most recent version of a item will be rank 1
-    # unionDf = inputDF.union(outputDf).withColumn("rank", dense_rank().over(Window.partitionBy(*partitionColumns).orderBy(desc("event_timestamp"))))
-    
-    # #keep only rank 1 records
-    # finalDf = unionDf.where(col("rank")==lit("1")).drop(col("rank"))
-    # bc.write_table(finalDf, outputTable, 10, "overwrite")
+    bc.write_table(finalDf, outputTable, 10, "overwrite")    
+    bc.write_redshift_table(finalDf, outputTable)
     
     logging.warn('********************************* done snapshot creation  *********************************') 
 

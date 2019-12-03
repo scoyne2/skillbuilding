@@ -27,7 +27,7 @@ def main():
     #clean records have a populated state column and a valid collection.
     #transform the keywords column from a string to an array of strings
     logging.warn('********************************* processing clean table *********************************')
-    dfClean = flatDf.where(is_clean == True).withColumn("keywords", split(regexp_replace(col("keywords"), "\[|\]", ""), ","))
+    dfClean = flatDf.where(is_clean == True).withColumn("keywords", regexp_replace(col("keywords"), "\[|\]", ""))
     bc.write_table(dfClean, bc.CLEAN_TABLE)
 
     logging.warn('********************************* done splitting clean and dirty *********************************')

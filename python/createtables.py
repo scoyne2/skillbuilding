@@ -60,7 +60,7 @@ def main():
                    ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
                      event_type VARCHAR, bidPackageId VARCHAR, biddergroupid VARCHAR, bidsSealed VARCHAR, companyId VARCHAR,
                      creatorId VARCHAR, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date,
-                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords array<VARCHAR>, 
+                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords VARCHAR, 
                      ndaRequired VARCHAR, officeId VARCHAR, projectId VARCHAR, public VARCHAR, state VARCHAR
                     )
                 partitioned by ({1} date)
@@ -82,7 +82,7 @@ def main():
                    ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
                      event_type VARCHAR, bidPackageId VARCHAR, biddergroupid VARCHAR, bidsSealed VARCHAR, companyId VARCHAR,
                      creatorId VARCHAR, dateBidsDue date, dateCreated date, dateEnd date, dateFirstInvited date,
-                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords array<VARCHAR>, 
+                     dateFirstViewed date, datePublished date, dateRFIsDue date, dateStart date, keywords VARCHAR, 
                      ndaRequired VARCHAR, officeId VARCHAR, projectId VARCHAR, public VARCHAR, state VARCHAR
                     )
                 partitioned by ({1} date)
@@ -120,13 +120,13 @@ def main():
     sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.BID_PACKAGES_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
-                   (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, keywords array<VARCHAR>, dateStart date, datePublished date, 
+                   (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, keywords VARCHAR, dateStart date, datePublished date, 
                     dateEnd date, dateCreated date, dateBidsDue date, creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, 
                     ingest_timestamp VARCHAR)
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""" .format(bc.BID_PACKAGES_EVENTS_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""".format(bc.BID_PACKAGES_EVENTS_TABLE, bc.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
                     LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.BID_PACKAGES_EVENTS_TABLE)
@@ -150,37 +150,11 @@ def main():
     bc.execute_redshift_query(sql_query)   
 
 
-
-    #create snapshot tables local on redshift.
-    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bidder_groups_temp
-                   ( event_timestamp VARCHAR, event_type VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, 
-                     dateFirstViewed DATE, dateFirstInvited DATE, dateCreated DATE, companyId VARCHAR, 
-                     biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE
-                    ) """ 
-
-    bc.execute_redshift_query(sql_query)
-
-    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_projects_temp
-                   (event_timestamp VARCHAR, event_type VARCHAR, projectId VARCHAR, public VARCHAR, 
-                   officeID VARCHAR, ndaRequired VARCHAR, dateStart date, dateRFIsDue date,
-                   dateEnd date, dateCreated date, dateBidsDue date, creatorId VARCHAR, 
-                   companyId VARCHAR, bidsSealed VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE) """ 
-    bc.execute_redshift_query(sql_query)
-
-    sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bid_packages_temp
-                   ( event_timestamp VARCHAR, event_type VARCHAR, keywords VARCHAR(1000), 
-                     dateStart date, datePublished date, dateEnd date, dateCreated date, dateBidsDue date,
-                     creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date VARCHAR) """ 
-    bc.execute_redshift_query(sql_query)
-
-
-
     #create snapshot tables local on redshift.
     sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bidder_groups 
                    ( event_timestamp VARCHAR, event_type VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, 
                      dateFirstViewed VARCHAR, dateFirstInvited VARCHAR, dateCreated VARCHAR, companyId VARCHAR, 
-                     biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE
-                    ) """ 
+                     biddergroupid VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date DATE) """ 
 
     bc.execute_redshift_query(sql_query)
 
@@ -192,9 +166,9 @@ def main():
     bc.execute_redshift_query(sql_query)
 
     sql_query = """CREATE TABLE IF NOT EXISTS dev.buildingconnected.snapshot_bid_packages 
-                   ( event_timestamp VARCHAR, event_type VARCHAR, keywords VARCHAR(1000), 
-                     dateStart VARCHAR, datePublished VARCHAR, dateEnd VARCHAR, dateCreated VARCHAR, dateBidsDue VARCHAR,
-                     creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, ingest_timestamp VARCHAR, ingest_date VARCHAR) """ 
+                   (event_timestamp VARCHAR, event_type VARCHAR, keywords VARCHAR, dateStart VARCHAR, datePublished VARCHAR, 
+                    dateEnd VARCHAR, dateCreated VARCHAR, dateBidsDue VARCHAR, creatorId VARCHAR, bidPackageId VARCHAR, ingest_uuid VARCHAR, 
+                    ingest_timestamp VARCHAR, ingest_date VARCHAR) """ 
     bc.execute_redshift_query(sql_query)
 
 
