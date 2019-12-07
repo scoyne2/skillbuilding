@@ -1,13 +1,14 @@
 import buildingconnected as bc
 import logging
 from datetime import datetime
+import config as cfg
+
 
 TODAY = datetime.today().strftime('%Y-%m-%d')
 
 
 def main():
     """Return None
-
     Creates the necessary database and tables for the ETL pipeline
     """
 
@@ -27,7 +28,7 @@ def main():
     #create events_raw external table for read only query on redshift
     #external table is needed to support struct
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.RAW_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.RAW_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    ( ingest_timestamp VARCHAR, 
@@ -45,16 +46,16 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""".format(bc.RAW_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""".format(cfg.RAW_TABLE, cfg.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.RAW_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.RAW_TABLE)
     bc.execute_redshift_query(sql_query)
 
 
     #create events_clean external table for read only query on redshift
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.CLEAN_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.CLEAN_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
@@ -66,17 +67,17 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""" .format(bc.CLEAN_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""" .format(cfg.CLEAN_TABLE, cfg.PARTITION_COLUMN)
 
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.CLEAN_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.CLEAN_TABLE)
     bc.execute_redshift_query(sql_query)
 
 
     #create events_dirty external table for read only query on redshift
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.DIRTY_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.DIRTY_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    ( ingest_timestamp VARCHAR, ingest_uuid VARCHAR, collection VARCHAR, event_timestamp VARCHAR, 
@@ -88,16 +89,16 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""" .format(bc.DIRTY_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""" .format(cfg.DIRTY_TABLE, cfg.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.DIRTY_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.DIRTY_TABLE)
     bc.execute_redshift_query(sql_query)   
 
 
     #create project events external table for read only query on redshift
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.PROJECTS_EVENTS_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.PROJECTS_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    (
@@ -108,16 +109,16 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""" .format(bc.PROJECTS_EVENTS_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""" .format(cfg.PROJECTS_EVENTS_TABLE, cfg.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.PROJECTS_EVENTS_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.PROJECTS_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)   
 
 
     #create bid packages events external table for read only query on redshift
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.BID_PACKAGES_EVENTS_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.BID_PACKAGES_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, keywords VARCHAR, dateStart date, datePublished date, 
@@ -126,16 +127,16 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""".format(bc.BID_PACKAGES_EVENTS_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""".format(cfg.BID_PACKAGES_EVENTS_TABLE, cfg.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.BID_PACKAGES_EVENTS_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.BID_PACKAGES_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)   
 
 
     #create bidder groups events external table for read only query on redshift
     #add today's partition
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.BIDDER_GROUPS_EVENTS_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.BIDDER_GROUPS_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    (event_timestamp VARCHAR, event_type VARCHAR, state VARCHAR, officeID VARCHAR, ndaRequired VARCHAR, dateFirstViewed date,
@@ -143,10 +144,10 @@ def main():
                 partitioned by ({1} date)
                 STORED AS PARQUET
                 LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{0}/'
-                table properties ('compression'='snappy');""" .format(bc.BIDDER_GROUPS_EVENTS_TABLE, bc.PARTITION_COLUMN)
+                table properties ('compression'='snappy');""" .format(cfg.BIDDER_GROUPS_EVENTS_TABLE, cfg.PARTITION_COLUMN)
     bc.execute_redshift_query(sql_query)
     sql_query = """ALTER TABLE dev.buildingconnected_external.{2} ADD if not exists PARTITION ({1}='{0}') 
-                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, bc.PARTITION_COLUMN, bc.BIDDER_GROUPS_EVENTS_TABLE)
+                    LOCATION 's3://interviewtestbld/scoyne/data/buildingconnected.{2}/{1}={0}';""".format(TODAY, cfg.PARTITION_COLUMN, cfg.BIDDER_GROUPS_EVENTS_TABLE)
     bc.execute_redshift_query(sql_query)   
 
 
@@ -173,7 +174,7 @@ def main():
 
 
     #create date dimension external table for read only query on redshift
-    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(bc.DIM_DATES_TABLE)
+    sql_query =  """drop table if exists buildingconnected_external.{0}""".format(cfg.DIM_DATES_TABLE)
     bc.execute_redshift_query(sql_query)
     sql_query = """CREATE EXTERNAL TABLE dev.buildingconnected_external.{0}
                    ( DateNum integer, Date date, YearMonthNum integer, Calendar_Quarter VARCHAR, MonthNum integer, MonthName VARCHAR, MonthShortName VARCHAR, WeekNum integer,
@@ -182,7 +183,7 @@ def main():
                 row format delimited
                 fields terminated by ','  
                 STORED AS TEXTFILE
-                LOCATION 's3://interviewtestbld/scoyne/data/dim_data/{0}/'  ;""" .format(bc.DIM_DATES_TABLE)
+                LOCATION 's3://interviewtestbld/scoyne/data/dim_data/{0}/'  ;""" .format(cfg.DIM_DATES_TABLE)
     bc.execute_redshift_query(sql_query)
    
     logging.warn('********************************* end creating database and tables  *********************************')

@@ -1,16 +1,10 @@
-from pyspark.sql.functions import col, lit, max as sparkMax, dense_rank, desc, current_date
-from pyspark.sql.utils import AnalysisException
+from pyspark.sql.functions import col, lit, dense_rank, desc, current_date
 from pyspark.sql import Window 
 from datetime import datetime
 import logging
 import argparse
 import buildingconnected as bc
-
-RAW_DATA_PATH =  bc.RAW_DATA_PATH
-RAW_TABLE = bc.RAW_TABLE
-CLEAN_TABLE = bc.CLEAN_TABLE
-DATABASE = bc.DATABASE
-
+import config as cfg
 
 TODAYS_PARTITION = datetime.today().strftime('%Y-%m-%d')
 
@@ -22,7 +16,7 @@ def main(inputTable, outputTable, partitionColumns):
     logging.basicConfig(filename='BuildingConnectedCreateSnapshot.log', level=logging.INFO)
     logging.warn('********************************* start snapshot creation *********************************')  
 
-    spark, sc, sqlContext = bc.init_spark("creatsnapshot"+ DATABASE + "." + inputTable)
+    spark, sc, sqlContext = bc.init_spark("creatsnapshot"+ cfg.DATABASE + "." + inputTable)
     inputDF = bc.read_from_s3(spark, inputTable, TODAYS_PARTITION).drop(col("state")).withColumn("ingest_date", current_date())
     
     try:
@@ -37,6 +31,7 @@ def main(inputTable, outputTable, partitionColumns):
         tempDf = inputDF.withColumn("rank", dense_rank().over(Window.partitionBy(*partitionColumns).orderBy(desc("event_timestamp"))))
         finalDf = tempDf.where(col("rank")==lit("1")).drop(col("rank"))
 
+    #writing this to s3/spark warehouse so that it can be easily read on next run. TODO use redshift only
     bc.write_table(finalDf, outputTable, 10, "overwrite")    
     bc.write_redshift_table(finalDf, outputTable)
     
@@ -48,18 +43,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.collection == "project":
-        arg_inputTable = bc.PROJECTS_EVENTS_TABLE
-        arg_outputTable = bc.PROJECT_SNAPSHOT_TABLE
+        arg_inputTable = cfg.PROJECTS_EVENTS_TABLE
+        arg_outputTable = cfg.PROJECT_SNAPSHOT_TABLE
         arg_partition_columns = ["projectId"]
 
     elif args.collection == "bid-packages":
-        arg_inputTable = bc.BID_PACKAGES_EVENTS_TABLE
-        arg_outputTable = bc.BID_PACKAGES_SNAPSHOT_TABLE
+        arg_inputTable = cfg.BID_PACKAGES_EVENTS_TABLE
+        arg_outputTable = cfg.BID_PACKAGES_SNAPSHOT_TABLE
         arg_partition_columns = ["bidPackageId"]
     
     elif args.collection == "bidder-groups":
-        arg_inputTable = bc.BIDDER_GROUPS_EVENTS_TABLE
-        arg_outputTable = bc.BIDDER_GROUPS_SNAPSHOT_TABLE
+        arg_inputTable = cfg.BIDDER_GROUPS_EVENTS_TABLE
+        arg_outputTable = cfg.BIDDER_GROUPS_SNAPSHOT_TABLE
         arg_partition_columns = ["biddergroupid"]
 
     main(arg_inputTable, arg_outputTable, arg_partition_columns)
