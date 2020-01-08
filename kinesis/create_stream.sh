@@ -1,1 +1,0 @@
-aws kinesis --profile personal --region us-west-1 create-stream --stream-name scoyne_test --shard-count 1

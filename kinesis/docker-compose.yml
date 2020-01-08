@@ -1,0 +1,11 @@
+version: '2'
+services:
+    producer:
+        image: 852056369035.dkr.ecr.us-west-2.amazonaws.com/kinesis-twitter:latest
+        logging:
+          driver: awslogs
+          options: 
+            awslogs-group: kinesis-project
+            awslogs-region: us-west-2
+            awslogs-stream-prefix: kinesis-project
+  

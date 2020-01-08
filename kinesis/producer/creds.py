@@ -1,0 +1,6 @@
+consumer_key = "xx"
+consumer_secret = "xx"
+access_token_key = "xx-xx"
+access_token_secret = "xx"
+aws_access_key = "xx"
+aws_secret_key = "xx"

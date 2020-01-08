@@ -3,7 +3,9 @@ services:
     # redis:
     #     image: 'redis:5.0.5'
     #     # command: redis-server --requirepass redispass
-
+    producer:
+        image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/kinesisskillbuilding:latest
+        
     webserver:
         image: 852056369035.dkr.ecr.us-west-1.amazonaws.com/airflow:latest
         cpu_shares: 50
@@ -24,12 +26,12 @@ services:
         ports:
             - "8080:8080"
         command: webserver
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-webserver
+        # logging:
+        #   driver: awslogs
+        #   options: 
+        #     awslogs-group: airflow
+        #     awslogs-region: us-west-1
+        #     awslogs-stream-prefix: airflow-webserver
     
     scheduler:
         depends_on:
@@ -50,12 +52,12 @@ services:
             - REDIS_PORT=6379
             - REDIS_PASSWORD:=""
         command: scheduler
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-scheduler
+        # logging:
+        #   driver: awslogs
+        #   options: 
+        #     awslogs-group: airflow
+        #     awslogs-region: us-west-1
+        #     awslogs-stream-prefix: airflow-scheduler
 
     worker:
         depends_on:
@@ -77,12 +79,12 @@ services:
             - REDIS_PASSWORD:=""
             - SPARK_SETTINGS:="--deploy-mode cluster --master yarn"
         command: worker
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-worker
+        # logging:
+        #   driver: awslogs
+        #   options: 
+        #     awslogs-group: airflow
+        #     awslogs-region: us-west-1
+        #     awslogs-stream-prefix: airflow-worker
 
     flower:
         depends_on:
@@ -106,9 +108,9 @@ services:
         ports:
             - "5555:5555"
         command: flower
-        logging:
-          driver: awslogs
-          options: 
-            awslogs-group: airflow
-            awslogs-region: us-west-1
-            awslogs-stream-prefix: airflow-flower
+        # logging:
+        #   driver: awslogs
+        #   options: 
+        #     awslogs-group: airflow
+        #     awslogs-region: us-west-1
+        #     awslogs-stream-prefix: airflow-flower

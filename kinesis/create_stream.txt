@@ -1,1 +1,0 @@
-aws kinesis create-stream --stream-name scoyne_test --shard-count 1
