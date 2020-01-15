@@ -107,4 +107,5 @@ venv.bak/
 # dbt profile
 profiles.yml
 
+.idea/
 twitter-batch/.idea/

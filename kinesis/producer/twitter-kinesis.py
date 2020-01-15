@@ -4,6 +4,8 @@ from TwitterAPI import TwitterAPI
 import boto3
 import json
 import creds
+import time
+
 
 ## twitter credentials
 
@@ -26,3 +28,4 @@ r = api.request('statuses/filter', {'locations':'-74,40,-73,41'})
 for item in r:
 	kinesis.put_record(StreamName="twitter-stream", Data=json.dumps(item), PartitionKey="filler")
 	print(json.dumps(item))
+	time.sleep(5)
